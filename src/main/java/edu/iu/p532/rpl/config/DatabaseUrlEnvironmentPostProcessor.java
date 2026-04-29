@@ -21,12 +21,22 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment env, SpringApplication app) {
+        // DATABASE_URL is checked FIRST and exclusively. application.properties
+        // already has a localhost default for spring.datasource.url, so checking
+        // that property here would always short-circuit and ignore Render's
+        // DATABASE_URL env var.
         String raw = firstNonBlank(
-                env.getProperty("SPRING_DATASOURCE_URL"),
-                env.getProperty("spring.datasource.url"),
-                env.getProperty("DATABASE_URL"));
+                env.getProperty("DATABASE_URL"),
+                env.getProperty("database.url"));
         if (raw == null) return;
-        if (raw.startsWith("jdbc:")) return;
+        if (raw.startsWith("jdbc:")) {
+            // Already a JDBC URL — just promote it to spring.datasource.url so
+            // it overrides the application.properties default.
+            Map<String, Object> direct = new HashMap<>();
+            direct.put("spring.datasource.url", raw);
+            env.getPropertySources().addFirst(new MapPropertySource("renderDatabaseUrl", direct));
+            return;
+        }
         if (!(raw.startsWith("postgres://") || raw.startsWith("postgresql://"))) return;
 
         try {
@@ -49,8 +59,10 @@ public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProce
             if (password != null) overrides.put("spring.datasource.password", password);
             env.getPropertySources().addFirst(
                     new MapPropertySource("renderDatabaseUrl", overrides));
-        } catch (Exception ignored) {
-            // Leave the original URL alone; Spring's own validation will surface a clear error.
+            System.out.println("[DatabaseUrlEnvironmentPostProcessor] translated DATABASE_URL → " + jdbcUrl
+                    + " (user=" + username + ")");
+        } catch (Exception e) {
+            System.err.println("[DatabaseUrlEnvironmentPostProcessor] failed to parse DATABASE_URL: " + e.getMessage());
         }
     }
 
