@@ -12,7 +12,7 @@ visitors).
 
 ## 🌐 Live Demo
 
-**Frontend + API:** https://YOUR-SERVICE.onrender.com  *(replace after deploy)*
+**Live:** https://project4-m7qh.onrender.com  
 
 The single-page UI is served by Spring Boot at the root path. The same URL
 also serves the REST API under `/api/*`. No separate frontend deploy is
