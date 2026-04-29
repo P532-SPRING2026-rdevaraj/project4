@@ -1,7 +1,7 @@
 # Resource Planning Ledger — CSCI-P532 Project 4 (Week 1)
 
 [![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?logo=render&logoColor=white)](https://YOUR-SERVICE.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?logo=render&logoColor=white)](https://project4-m7qh.onrender.com)
 
 A Spring Boot service for planning, executing, and auditing operational work
 plans backed by a double-entry resource ledger. Built on the four-layer
