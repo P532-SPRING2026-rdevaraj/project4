@@ -1,6 +1,7 @@
 # Resource Planning Ledger — CSCI-P532 Project 4 (Week 1)
 
 [![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?logo=render&logoColor=white)](https://YOUR-SERVICE.onrender.com)
 
 A Spring Boot service for planning, executing, and auditing operational work
 plans backed by a double-entry resource ledger. Built on the four-layer
@@ -9,7 +10,14 @@ required design patterns: **State**, **Composite**, **Iterator**, and
 **Template Method** (plus a Visitor extension that primes the Week-2 metric
 visitors).
 
-> **Live URL:** https://YOUR-SERVICE.onrender.com  *(replace after deploy)*
+## 🌐 Live Demo
+
+**Frontend + API:** https://YOUR-SERVICE.onrender.com  *(replace after deploy)*
+
+The single-page UI is served by Spring Boot at the root path. The same URL
+also serves the REST API under `/api/*`. No separate frontend deploy is
+needed — the static assets in `src/main/resources/static/` are bundled into
+the JAR.
 
 ---
 
