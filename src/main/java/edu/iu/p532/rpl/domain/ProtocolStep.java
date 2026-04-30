@@ -1,5 +1,6 @@
 package edu.iu.p532.rpl.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ public class ProtocolStep {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "protocol_id")
     private Protocol protocol;
