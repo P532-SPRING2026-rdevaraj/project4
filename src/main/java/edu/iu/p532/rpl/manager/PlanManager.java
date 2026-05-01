@@ -32,12 +32,16 @@ public class PlanManager {
 
     @Transactional(readOnly = true)
     public List<Plan> findRoots() {
-        return planRepo.findByParentPlanIsNull();
+        List<Plan> roots = planRepo.findByParentPlanIsNull();
+        for (Plan p : roots) eagerLoad(p);
+        return roots;
     }
 
     @Transactional(readOnly = true)
     public Plan findById(Long id) {
-        return planRepo.findById(id).orElseThrow(() -> new NotFoundException("Plan " + id));
+        Plan plan = planRepo.findById(id).orElseThrow(() -> new NotFoundException("Plan " + id));
+        eagerLoad(plan);
+        return plan;
     }
 
     @Transactional
@@ -81,7 +85,10 @@ public class PlanManager {
     }
 
     private void eagerLoad(Plan plan) {
-        plan.getChildActions().size();
+        for (ProposedAction a : plan.getChildActions()) {
+            a.getAllocations().size();
+            if (a.getImplementedAction() != null) a.getImplementedAction().getId();
+        }
         for (Plan child : plan.getChildPlans()) {
             eagerLoad(child);
         }

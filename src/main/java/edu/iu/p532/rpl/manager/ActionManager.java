@@ -102,13 +102,16 @@ public class ActionManager implements ActionStateCallbacks {
 
     @Override
     public ImplementedAction onImplement(ProposedAction action) {
-        ImplementedAction impl = new ImplementedAction();
-        impl.setProposedAction(action);
+        ImplementedAction impl = action.getImplementedAction();
+        if (impl == null) {
+            impl = new ImplementedAction();
+            impl.setProposedAction(action);
+            action.setImplementedAction(impl);
+        }
         impl.setActualStart(Instant.now(clock));
         impl.setActualParty(action.getParty());
         impl.setActualLocation(action.getLocation());
         impl.setStatus(ActionStatus.IN_PROGRESS);
-        action.setImplementedAction(impl);
         return implementedRepo.save(impl);
     }
 

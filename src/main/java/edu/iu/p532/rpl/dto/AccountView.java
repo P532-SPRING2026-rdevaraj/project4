@@ -8,4 +8,5 @@ public record AccountView(
         String name,
         AccountKind kind,
         String resourceTypeName,
+        String unit,
         BigDecimal balance) {}

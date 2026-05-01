@@ -29,6 +29,7 @@ public class AccountController {
                     a.getName(),
                     a.getKind(),
                     a.getResourceType() == null ? null : a.getResourceType().getName(),
+                    a.getResourceType() == null ? null : a.getResourceType().getUnit(),
                     a.getBalance()));
         }
         return out;

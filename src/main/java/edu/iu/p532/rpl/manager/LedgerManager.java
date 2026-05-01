@@ -49,14 +49,21 @@ public class LedgerManager {
         // (asset vs consumable) keeps the State machine ignorant of ledger
         // strategy choice.
         Transaction tx = consumableGen.generateEntries(implemented);
+        // Persist any transient accounts (per-action USAGE accounts are new
+        // every completion); withdrawal entries already reference managed
+        // pool accounts.
+        for (Entry e : tx.getEntries()) {
+            Account acct = e.getAccount();
+            if (acct.getId() == null) {
+                acct = accountRepo.save(acct);
+                e.setAccount(acct);
+            }
+        }
         Transaction saved = txRepo.save(tx);
         for (Entry e : saved.getEntries()) {
-            Account acct = accountRepo.findById(e.getAccount().getId())
-                    .orElseGet(() -> accountRepo.save(e.getAccount()));
+            Account acct = e.getAccount();
             acct.setBalance(acct.getBalance().add(e.getAmount()));
             accountRepo.save(acct);
-            e.setAccount(acct);
-            entryRepo.save(e);
             postingRules.onEntryPosted(e);
         }
         return saved;

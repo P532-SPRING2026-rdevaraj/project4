@@ -24,13 +24,19 @@ public class ProtocolManager {
 
     @Transactional(readOnly = true)
     public List<Protocol> findAll() {
-        return protocolRepo.findAll();
+        List<Protocol> all = protocolRepo.findAll();
+        for (Protocol p : all) {
+            for (ProtocolStep s : p.getSteps()) s.getDependsOn().size();
+        }
+        return all;
     }
 
     @Transactional(readOnly = true)
     public Protocol findById(Long id) {
-        return protocolRepo.findById(id)
+        Protocol p = protocolRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Protocol " + id));
+        for (ProtocolStep s : p.getSteps()) s.getDependsOn().size();
+        return p;
     }
 
     @Transactional

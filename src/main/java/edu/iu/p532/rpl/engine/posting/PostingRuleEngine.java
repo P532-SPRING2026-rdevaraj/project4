@@ -4,6 +4,7 @@ import edu.iu.p532.rpl.domain.*;
 import edu.iu.p532.rpl.resourceaccess.AccountRepository;
 import edu.iu.p532.rpl.resourceaccess.AuditLogEntryRepository;
 import edu.iu.p532.rpl.resourceaccess.EntryRepository;
+import edu.iu.p532.rpl.resourceaccess.TransactionRepository;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -21,15 +22,18 @@ public class PostingRuleEngine {
 
     private final AccountRepository accountRepo;
     private final EntryRepository entryRepo;
+    private final TransactionRepository txRepo;
     private final AuditLogEntryRepository auditRepo;
     private final Clock clock;
 
     public PostingRuleEngine(AccountRepository accountRepo,
                              EntryRepository entryRepo,
+                             TransactionRepository txRepo,
                              AuditLogEntryRepository auditRepo,
                              Clock clock) {
         this.accountRepo = accountRepo;
         this.entryRepo = entryRepo;
+        this.txRepo = txRepo;
         this.auditRepo = auditRepo;
         this.clock = clock;
     }
@@ -40,15 +44,28 @@ public class PostingRuleEngine {
         if (account.getBalance().compareTo(BigDecimal.ZERO) >= 0) return;
 
         Account alertAccount = ensureAlertAccount(account);
-        Entry alert = new Entry();
-        alert.setTransaction(posted.getTransaction());
-        alert.setAccount(alertAccount);
-        alert.setAmount(account.getBalance());
         Instant now = Instant.now(clock);
+
+        // Spec F8: alert is recorded as its own bookkeeping event so the
+        // originating completion transaction (F7) keeps its conservation
+        // invariant (sum of entries == 0).
+        Transaction alertTx = new Transaction();
+        alertTx.setCreatedAt(now);
+        alertTx.setDescription("Over-consumption alert on '" + account.getName() + "'");
+        Transaction savedTx = txRepo.save(alertTx);
+
+        BigDecimal amount = account.getBalance();
+        Entry alert = new Entry();
+        alert.setTransaction(savedTx);
+        alert.setAccount(alertAccount);
+        alert.setAmount(amount);
         alert.setBookedAt(now);
         alert.setChargedAt(posted.getChargedAt());
         alert.setOriginatingAction(posted.getOriginatingAction());
         entryRepo.save(alert);
+
+        alertAccount.setBalance(alertAccount.getBalance().add(amount));
+        accountRepo.save(alertAccount);
 
         AuditLogEntry log = new AuditLogEntry();
         log.setEvent("OVER_CONSUMPTION_ALERT");

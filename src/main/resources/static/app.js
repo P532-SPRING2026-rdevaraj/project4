@@ -1,10 +1,18 @@
 const API_BASE = (window.API_BASE || '').replace(/\/$/, '');
+async function parseOrThrow(r) {
+  const text = await r.text();
+  let body;
+  try { body = text ? JSON.parse(text) : null; }
+  catch { throw new Error(`HTTP ${r.status}: ${text.slice(0, 200) || r.statusText}`); }
+  if (!r.ok) throw new Error(body?.message || body?.error || `HTTP ${r.status}`);
+  return body;
+}
 const api = {
-  get: (url) => fetch(API_BASE + url).then((r) => r.ok ? r.json() : r.json().then((e) => Promise.reject(e))),
+  get: (url) => fetch(API_BASE + url).then(parseOrThrow),
   post: (url, body) => fetch(API_BASE + url, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: body == null ? null : JSON.stringify(body),
-  }).then((r) => r.ok ? r.json() : r.json().then((e) => Promise.reject(e))),
+  }).then(parseOrThrow),
 };
 
 document.querySelectorAll('nav button').forEach((btn) => {
@@ -33,8 +41,8 @@ async function loadDashboard() {
     const negative = parseFloat(a.balance) < 0;
     div.className = 'card' + (negative ? ' alert' : '');
     div.innerHTML = `
-      <h3>${a.name}</h3>
-      <p><strong>${a.balance}</strong> ${a.resourceTypeName ?? ''}</p>
+      <h3>${a.name.replace(/^pool:/, '')}</h3>
+      <p><strong>${a.balance}</strong> ${a.unit ?? ''}</p>
       ${negative ? '<p>⚠ Over-consumed</p>' : ''}`;
     cards.appendChild(div);
   });
@@ -83,14 +91,18 @@ async function loadResources() {
 document.getElementById('resource-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
-  await api.post('/api/resource-types', {
-    name: fd.get('name'),
-    kind: fd.get('kind'),
-    unit: fd.get('unit'),
-    initialPoolBalance: parseFloat(fd.get('initialPoolBalance') || '0'),
-  });
-  e.target.reset();
-  loadResources();
+  try {
+    await api.post('/api/resource-types', {
+      name: fd.get('name'),
+      kind: fd.get('kind'),
+      unit: fd.get('unit'),
+      initialPoolBalance: parseFloat(fd.get('initialPoolBalance') || '0'),
+    });
+    e.target.reset();
+    loadResources();
+  } catch (err) {
+    alert(`Could not create resource type: ${err.message}`);
+  }
 });
 
 // --- Plans --------------------------------------------------------------------
@@ -210,13 +222,17 @@ async function showAction(id) {
   document.getElementById('alloc-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    await api.post(`/api/actions/${id}/allocations`, {
-      resourceTypeId: parseInt(fd.get('resourceTypeId'), 10),
-      quantity: parseFloat(fd.get('quantity')),
-      kind: fd.get('kind'),
-      assetId: fd.get('assetId') || null,
-    });
-    showAction(id);
+    try {
+      await api.post(`/api/actions/${id}/allocations`, {
+        resourceTypeId: parseInt(fd.get('resourceTypeId'), 10),
+        quantity: parseFloat(fd.get('quantity')),
+        kind: fd.get('kind'),
+        assetId: fd.get('assetId') || null,
+      });
+      showAction(id);
+    } catch (err) {
+      alert(`Could not add allocation: ${err.message}`);
+    }
   });
 }
 

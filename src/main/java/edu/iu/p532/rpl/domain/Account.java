@@ -1,5 +1,6 @@
 package edu.iu.p532.rpl.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
@@ -16,6 +17,7 @@ public class Account {
     @Column(nullable = false)
     private AccountKind kind;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "resource_type_id")
     private ResourceType resourceType;
