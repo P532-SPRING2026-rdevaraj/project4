@@ -106,5 +106,6 @@ public class Plan implements PlanNode {
     @Override
     public void accept(PlanNodeVisitor visitor) {
         visitor.visit(this);
+        for (PlanNode child : getChildren()) child.accept(visitor);
     }
 }

@@ -10,9 +10,12 @@ public class ProposedState implements ActionState {
 
     @Override
     public void implement(ActionContext ctx) {
-        ProposedAction a = ctx.getAction();
-        ctx.getCallbacks().onImplement(a);
-        a.setStatus(ActionStatus.IN_PROGRESS);
+        throw new IllegalStateTransitionException(name(), "implement");
+    }
+
+    @Override
+    public void submitForApproval(ActionContext ctx) {
+        ctx.getAction().setStatus(ActionStatus.PENDING_APPROVAL);
     }
 
     @Override

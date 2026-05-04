@@ -6,6 +6,7 @@ import edu.iu.p532.rpl.dto.PlanReport;
 import edu.iu.p532.rpl.dto.PlanReportRow;
 import edu.iu.p532.rpl.engine.composite.PlanNode;
 import edu.iu.p532.rpl.engine.iterator.DepthFirstPlanIterator;
+import edu.iu.p532.rpl.engine.iterator.FilteredPlanIterator;
 import edu.iu.p532.rpl.exception.NotFoundException;
 import edu.iu.p532.rpl.resourceaccess.PlanRepository;
 import edu.iu.p532.rpl.resourceaccess.ResourceTypeRepository;
@@ -37,14 +38,17 @@ public class PlanReportManager {
     }
 
     @Transactional(readOnly = true)
-    public PlanReport buildReport(Long planId) {
+    public PlanReport buildReport(Long planId, String statusFilter) {
         Plan root = planRepo.findById(planId)
                 .orElseThrow(() -> new NotFoundException("Plan " + planId));
         eagerLoad(root);
         List<ResourceType> types = resourceTypeRepo.findAll();
 
+        Iterator<PlanNode> it = statusFilter == null || statusFilter.isBlank()
+                ? new DepthFirstPlanIterator(root)
+                : new FilteredPlanIterator(root, node -> node.getStatus().name().equalsIgnoreCase(statusFilter));
+
         List<PlanReportRow> rows = new ArrayList<>();
-        Iterator<PlanNode> it = new DepthFirstPlanIterator(root);
         while (it.hasNext()) {
             PlanNode node = it.next();
             Map<String, BigDecimal> totals = new HashMap<>();

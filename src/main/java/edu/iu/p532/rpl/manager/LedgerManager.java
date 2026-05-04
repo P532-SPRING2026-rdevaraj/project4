@@ -5,7 +5,9 @@ import edu.iu.p532.rpl.domain.Entry;
 import edu.iu.p532.rpl.domain.ImplementedAction;
 import edu.iu.p532.rpl.domain.Transaction;
 import edu.iu.p532.rpl.engine.ledger.AbstractLedgerEntryGenerator;
+import edu.iu.p532.rpl.engine.ledger.AssetLedgerEntryGenerator;
 import edu.iu.p532.rpl.engine.ledger.ConsumableLedgerEntryGenerator;
+import edu.iu.p532.rpl.engine.ledger.ReversalLedgerEntryGenerator;
 import edu.iu.p532.rpl.engine.posting.PostingRuleEngine;
 import edu.iu.p532.rpl.resourceaccess.AccountRepository;
 import edu.iu.p532.rpl.resourceaccess.EntryRepository;
@@ -26,17 +28,23 @@ import java.util.List;
 public class LedgerManager {
 
     private final ConsumableLedgerEntryGenerator consumableGen;
+    private final AssetLedgerEntryGenerator assetGen;
+    private final ReversalLedgerEntryGenerator reversalGen;
     private final TransactionRepository txRepo;
     private final EntryRepository entryRepo;
     private final AccountRepository accountRepo;
     private final PostingRuleEngine postingRules;
 
     public LedgerManager(ConsumableLedgerEntryGenerator consumableGen,
+                         AssetLedgerEntryGenerator assetGen,
+                         ReversalLedgerEntryGenerator reversalGen,
                          TransactionRepository txRepo,
                          EntryRepository entryRepo,
                          AccountRepository accountRepo,
                          PostingRuleEngine postingRules) {
         this.consumableGen = consumableGen;
+        this.assetGen = assetGen;
+        this.reversalGen = reversalGen;
         this.txRepo = txRepo;
         this.entryRepo = entryRepo;
         this.accountRepo = accountRepo;
@@ -45,13 +53,17 @@ public class LedgerManager {
 
     @Transactional
     public Transaction postCompletion(ImplementedAction implemented) {
-        // Week 1: only consumable generator. Week 2: a small selector here
-        // (asset vs consumable) keeps the State machine ignorant of ledger
-        // strategy choice.
-        Transaction tx = consumableGen.generateEntries(implemented);
-        // Persist any transient accounts (per-action USAGE accounts are new
-        // every completion); withdrawal entries already reference managed
-        // pool accounts.
+        Transaction tx = persist(consumableGen.generateEntries(implemented));
+        persist(assetGen.generateEntries(implemented));
+        return tx;
+    }
+
+    @Transactional
+    public Transaction postReversal(ImplementedAction implemented) {
+        return persist(reversalGen.generateEntries(implemented));
+    }
+
+    private Transaction persist(Transaction tx) {
         for (Entry e : tx.getEntries()) {
             Account acct = e.getAccount();
             if (acct.getId() == null) {

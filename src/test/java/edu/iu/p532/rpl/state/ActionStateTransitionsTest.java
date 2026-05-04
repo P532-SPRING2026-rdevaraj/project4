@@ -43,14 +43,16 @@ class ActionStateTransitionsTest {
     }
 
     @Test
-    void implement_fromProposed_movesToInProgress() {
-        // Arrange
-        when(callbacks.onImplement(action)).thenReturn(new ImplementedAction());
-        // Act
-        proposed.implement(ctx);
-        // Assert
-        assertThat(action.getStatus()).isEqualTo(ActionStatus.IN_PROGRESS);
-        verify(callbacks).onImplement(action);
+    void implement_fromProposed_throwsIllegalTransition() {
+        // Week 2: direct implement() from PROPOSED is removed; must go via submitForApproval
+        assertThatThrownBy(() -> proposed.implement(ctx))
+                .isInstanceOf(IllegalStateTransitionException.class);
+    }
+
+    @Test
+    void submitForApproval_fromProposed_movesToPendingApproval() {
+        proposed.submitForApproval(ctx);
+        assertThat(action.getStatus()).isEqualTo(ActionStatus.PENDING_APPROVAL);
     }
 
     @Test

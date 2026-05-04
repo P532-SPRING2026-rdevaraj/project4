@@ -68,7 +68,29 @@
     <ul id="plan-list" class="list"></ul>
     <div id="plan-detail" class="card hidden">
       <h3>Plan detail</h3>
+      <div class="toolbar">
+        <label>Depth limit <input id="depth-slider" type="range" min="0" max="10" value="10" /></label>
+        <span id="depth-label">10</span>
+        <label>Status filter
+          <select id="report-filter">
+            <option value="">All</option>
+            <option value="PROPOSED">PROPOSED</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="PENDING_APPROVAL">PENDING_APPROVAL</option>
+            <option value="SUSPENDED">SUSPENDED</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="REOPENED">REOPENED</option>
+            <option value="ABANDONED">ABANDONED</option>
+          </select>
+        </label>
+      </div>
       <div id="plan-tree"></div>
+      <div id="plan-metrics" class="metrics-panel hidden">
+        <h4>Metrics</h4>
+        <span id="metric-ratio"></span>
+        <span id="metric-cost"></span>
+        <span id="metric-risk"></span>
+      </div>
       <h4>Summary report</h4>
       <table id="plan-report"><thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Totals</th></tr></thead><tbody></tbody></table>
     </div>
@@ -80,8 +102,17 @@
 
   <section id="ledger" class="tab">
     <h2>Ledger</h2>
-    <label>Account <select id="ledger-account"></select></label>
-    <table id="ledger-table"><thead><tr><th>Booked</th><th>Charged</th><th>Amount</th><th>Originating action</th></tr></thead><tbody></tbody></table>
+    <div class="toolbar">
+      <label>Account <select id="ledger-account"></select></label>
+      <label>Show
+        <select id="ledger-filter">
+          <option value="all">All entries</option>
+          <option value="consumable">Consumable entries</option>
+          <option value="asset">Asset entries</option>
+        </select>
+      </label>
+    </div>
+    <table id="ledger-table"><thead><tr><th>Booked</th><th>Charged</th><th>Amount</th><th>Account</th><th>Originating action</th></tr></thead><tbody></tbody></table>
   </section>
 
   <section id="audit" class="tab">

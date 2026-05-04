@@ -1,11 +1,12 @@
 package edu.iu.p532.rpl.engine.state;
 
 import edu.iu.p532.rpl.domain.ActionStatus;
+import edu.iu.p532.rpl.domain.ImplementedAction;
 import edu.iu.p532.rpl.exception.IllegalStateTransitionException;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CompletedState implements ActionState {
+public class ReopenedState implements ActionState {
 
     @Override public void implement(ActionContext ctx) {
         throw new IllegalStateTransitionException(name(), "implement");
@@ -20,20 +21,16 @@ public class CompletedState implements ActionState {
     }
 
     @Override public void complete(ActionContext ctx) {
-        throw new IllegalStateTransitionException(name(), "complete");
+        ImplementedAction implemented = ctx.getAction().getImplementedAction();
+        if (implemented == null) throw new IllegalStateTransitionException(name(), "complete");
+        ctx.getCallbacks().onComplete(implemented);
+        ctx.getAction().setStatus(ActionStatus.COMPLETED);
+        implemented.setStatus(ActionStatus.COMPLETED);
     }
 
     @Override public void abandon(ActionContext ctx) {
-        throw new IllegalStateTransitionException(name(), "abandon");
+        ctx.getAction().setStatus(ActionStatus.ABANDONED);
     }
 
-    @Override public void reopen(ActionContext ctx) {
-        ctx.getCallbacks().onReopen(ctx.getAction().getImplementedAction());
-        ctx.getAction().setStatus(ActionStatus.REOPENED);
-        if (ctx.getAction().getImplementedAction() != null) {
-            ctx.getAction().getImplementedAction().setStatus(ActionStatus.REOPENED);
-        }
-    }
-
-    @Override public String name() { return ActionStatus.COMPLETED.name(); }
+    @Override public String name() { return ActionStatus.REOPENED.name(); }
 }

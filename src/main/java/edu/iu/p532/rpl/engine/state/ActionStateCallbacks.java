@@ -14,4 +14,5 @@ public interface ActionStateCallbacks {
     void onComplete(ImplementedAction implemented);
     void openSuspension(ProposedAction action, String reason);
     void closeSuspension(ProposedAction action);
+    default void onReopen(ImplementedAction implemented) {}
 }

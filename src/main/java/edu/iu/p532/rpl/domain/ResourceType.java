@@ -22,6 +22,9 @@ public class ResourceType {
     @JoinColumn(name = "pool_account_id")
     private Account poolAccount;
 
+    @Column(precision = 19, scale = 4)
+    private java.math.BigDecimal unitCost;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
@@ -32,4 +35,6 @@ public class ResourceType {
     public void setUnit(String unit) { this.unit = unit; }
     public Account getPoolAccount() { return poolAccount; }
     public void setPoolAccount(Account poolAccount) { this.poolAccount = poolAccount; }
+    public java.math.BigDecimal getUnitCost() { return unitCost; }
+    public void setUnitCost(java.math.BigDecimal unitCost) { this.unitCost = unitCost; }
 }

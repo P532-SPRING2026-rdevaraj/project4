@@ -53,6 +53,26 @@ public class ActionController {
         return toView(actionManager.abandon(id));
     }
 
+    @PostMapping("/{id}/submit-for-approval")
+    public ActionView submitForApproval(@PathVariable Long id) {
+        return toView(actionManager.submitForApproval(id));
+    }
+
+    @PostMapping("/{id}/approve")
+    public ActionView approve(@PathVariable Long id) {
+        return toView(actionManager.approve(id));
+    }
+
+    @PostMapping("/{id}/reject")
+    public ActionView reject(@PathVariable Long id) {
+        return toView(actionManager.reject(id));
+    }
+
+    @PostMapping("/{id}/reopen")
+    public ActionView reopen(@PathVariable Long id) {
+        return toView(actionManager.reopen(id));
+    }
+
     @PostMapping("/{id}/allocations")
     public ResourceAllocation addAllocation(@PathVariable Long id, @RequestBody CreateAllocationRequest req) {
         ResourceAllocation a = new ResourceAllocation();

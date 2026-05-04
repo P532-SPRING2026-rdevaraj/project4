@@ -135,29 +135,72 @@ document.getElementById('plan-form').addEventListener('submit', async (e) => {
   loadPlans();
 });
 
+let currentPlanId = null;
+
 async function showPlan(id) {
-  const detail = await api.get(`/api/plans/${id}`);
-  const report = await api.get(`/api/plans/${id}/report`);
+  currentPlanId = id;
+  const [detail, report, metrics] = await Promise.all([
+    api.get(`/api/plans/${id}`),
+    api.get(`/api/plans/${id}/report`),
+    api.get(`/api/plans/${id}/metrics`),
+  ]);
+
   document.getElementById('plan-detail').classList.remove('hidden');
-  document.getElementById('plan-tree').innerHTML = renderTree(detail);
-  document.getElementById('plan-tree').addEventListener('click', onTreeClick);
-  const tbody = document.querySelector('#plan-report tbody');
-  tbody.innerHTML = report.rows.map((r) => `
+
+  const depthSlider = document.getElementById('depth-slider');
+  const depthLabel = document.getElementById('depth-label');
+  depthSlider.oninput = () => {
+    depthLabel.textContent = depthSlider.value;
+    renderTreeWithDepth(detail, parseInt(depthSlider.value, 10));
+  };
+  renderTreeWithDepth(detail, parseInt(depthSlider.value, 10));
+
+  const metricsPanel = document.getElementById('plan-metrics');
+  metricsPanel.classList.remove('hidden');
+  document.getElementById('metric-ratio').textContent =
+    `Completion: ${(metrics.completionRatio * 100).toFixed(1)}% (${metrics.completedLeaves}/${metrics.totalLeaves} leaves)`;
+  document.getElementById('metric-cost').textContent =
+    ` | Cost: ${metrics.totalResourceCost}`;
+  document.getElementById('metric-risk').textContent =
+    ` | Risk score: ${metrics.riskScore}`;
+
+  const filter = document.getElementById('report-filter');
+  const renderReport = async () => {
+    const sf = filter.value;
+    const r = await api.get(`/api/plans/${id}/report${sf ? '?statusFilter=' + sf : ''}`);
+    document.querySelector('#plan-report tbody').innerHTML = r.rows.map((row) => `
+      <tr>
+        <td>${row.name}</td>
+        <td>${row.type}</td>
+        <td><span class="status ${row.status}">${row.status}</span></td>
+        <td>${Object.entries(row.totals).map(([k, v]) => `${k}: ${v}`).join('; ') || '—'}</td>
+      </tr>`).join('');
+  };
+  filter.onchange = renderReport;
+  document.querySelector('#plan-report tbody').innerHTML = report.rows.map((r) => `
     <tr>
-      <td>${'  '.repeat(0)}${r.name}</td>
+      <td>${r.name}</td>
       <td>${r.type}</td>
       <td><span class="status ${r.status}">${r.status}</span></td>
       <td>${Object.entries(r.totals).map(([k, v]) => `${k}: ${v}`).join('; ') || '—'}</td>
     </tr>`).join('');
 }
 
-function renderTree(node) {
+function renderTreeWithDepth(node, depth) {
+  document.getElementById('plan-tree').innerHTML = renderTree(node, 0, depth);
+  document.getElementById('plan-tree').addEventListener('click', onTreeClick);
+}
+
+function renderTree(node, depth = 0, depthLimit = 10) {
   if (node.type === 'ACTION') {
     return `<div data-action-id="${node.id}" class="tree-leaf">▸ ${node.name} <span class="status ${node.status}">${node.status}</span></div>`;
   }
+  if (depth >= depthLimit) {
+    return `<div class="tree-leaf collapsed" data-plan-id="${node.id}">▶ ${node.name} <span class="status ${node.status}">${node.status}</span> <em>(collapsed)</em></div>`;
+  }
   return `<details open>
     <summary>${node.name} <span class="status ${node.status}">${node.status}</span></summary>
-    <div class="tree">${node.children.map(renderTree).join('')}</div>
+    <div class="tree">${node.children.map((c) => renderTree(c, depth + 1, depthLimit)).join('')}</div>
   </details>`;
 }
 
@@ -168,12 +211,15 @@ function onTreeClick(e) {
 }
 
 const TRANSITIONS = {
-  PROPOSED: ['implement', 'suspend', 'abandon'],
+  PROPOSED: ['submit-for-approval', 'suspend', 'abandon'],
+  PENDING_APPROVAL: ['approve', 'reject'],
   SUSPENDED: ['resume', 'abandon'],
   IN_PROGRESS: ['complete', 'suspend', 'abandon'],
-  COMPLETED: [],
+  COMPLETED: ['reopen'],
+  REOPENED: ['complete', 'abandon'],
   ABANDONED: [],
 };
+const ALL_OPS = ['submit-for-approval','approve','reject','implement','complete','suspend','resume','abandon','reopen'];
 
 async function showAction(id) {
   const a = await api.get(`/api/actions/${id}`);
@@ -182,7 +228,7 @@ async function showAction(id) {
   document.getElementById('action-content').innerHTML = `
     <p><strong>${a.name}</strong> <span class="status ${a.status}">${a.status}</span></p>
     <div class="actions-bar">
-      ${['implement','complete','suspend','resume','abandon'].map((op) => `
+      ${ALL_OPS.map((op) => `
         <button data-op="${op}" data-id="${a.id}" ${allowed.includes(op) ? '' : 'disabled'}>${op}</button>`).join('')}
     </div>
     <div class="diff">
@@ -243,16 +289,24 @@ async function loadLedger() {
   sel.innerHTML = accounts.map((a) => `<option value="${a.id}">${a.name} (${a.kind})</option>`).join('');
   if (accounts.length) loadLedgerEntries(accounts[0].id);
   sel.onchange = () => loadLedgerEntries(parseInt(sel.value, 10));
+  document.getElementById('ledger-filter').onchange = () => loadLedgerEntries(parseInt(sel.value, 10));
 }
 
 async function loadLedgerEntries(accountId) {
   const entries = await api.get(`/api/accounts/${accountId}/entries`);
+  const filterVal = document.getElementById('ledger-filter')?.value ?? 'all';
+  const filtered = entries.filter((e) => {
+    if (filterVal === 'consumable') return e.accountName?.startsWith('usage:');
+    if (filterVal === 'asset') return e.accountName?.startsWith('asset-usage:');
+    return true;
+  });
   const tbody = document.querySelector('#ledger-table tbody');
-  tbody.innerHTML = entries.map((e) => `
+  tbody.innerHTML = filtered.map((e) => `
     <tr>
       <td>${e.bookedAt}</td>
       <td>${e.chargedAt}</td>
       <td>${e.amount}</td>
+      <td>${e.accountName ?? '—'}</td>
       <td>${e.originatingActionName ?? '—'} (#${e.originatingActionId ?? '—'})</td>
     </tr>`).join('');
 }

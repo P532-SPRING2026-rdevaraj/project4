@@ -47,22 +47,31 @@ class ActionManagerStateMachineTest {
     }
 
     @Test
-    void implement_createsImplementedActionAndMovesToInProgress() {
+    void implement_fromProposed_throwsIllegalTransition() {
+        // Week 2: direct implement() is removed; use submitForApproval() → approve()
+        ProposedAction a = new ProposedAction();
+        a.setId(7L);
+        a.setStatus(ActionStatus.PROPOSED);
+        when(actionRepo.findById(7L)).thenReturn(Optional.of(a));
+
+        assertThatThrownBy(() -> manager.implement(7L))
+                .isInstanceOf(IllegalStateTransitionException.class);
+    }
+
+    @Test
+    void submitForApproval_movesToPendingApproval() {
         // Arrange
         ProposedAction a = new ProposedAction();
         a.setId(7L);
         a.setStatus(ActionStatus.PROPOSED);
         when(actionRepo.findById(7L)).thenReturn(Optional.of(a));
         when(actionRepo.save(any(ProposedAction.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(implementedRepo.save(any(ImplementedAction.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Act
-        ProposedAction result = manager.implement(7L);
+        ProposedAction result = manager.submitForApproval(7L);
 
         // Assert
-        assertThat(result.getStatus()).isEqualTo(ActionStatus.IN_PROGRESS);
-        assertThat(result.getImplementedAction()).isNotNull();
-        assertThat(result.getImplementedAction().getActualStart()).isEqualTo(Instant.parse("2026-04-27T10:00:00Z"));
+        assertThat(result.getStatus()).isEqualTo(ActionStatus.PENDING_APPROVAL);
     }
 
     @Test

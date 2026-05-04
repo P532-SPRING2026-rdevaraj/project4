@@ -4,6 +4,7 @@ import edu.iu.p532.rpl.domain.Plan;
 import edu.iu.p532.rpl.domain.ProposedAction;
 import edu.iu.p532.rpl.dto.*;
 import edu.iu.p532.rpl.manager.PlanManager;
+import edu.iu.p532.rpl.manager.PlanMetricsManager;
 import edu.iu.p532.rpl.manager.PlanReportManager;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,10 +17,13 @@ public class PlanController {
 
     private final PlanManager planManager;
     private final PlanReportManager reportManager;
+    private final PlanMetricsManager metricsManager;
 
-    public PlanController(PlanManager planManager, PlanReportManager reportManager) {
+    public PlanController(PlanManager planManager, PlanReportManager reportManager,
+                          PlanMetricsManager metricsManager) {
         this.planManager = planManager;
         this.reportManager = reportManager;
+        this.metricsManager = metricsManager;
     }
 
     @GetMapping
@@ -43,8 +47,14 @@ public class PlanController {
     }
 
     @GetMapping("/{id}/report")
-    public PlanReport report(@PathVariable Long id) {
-        return reportManager.buildReport(id);
+    public PlanReport report(@PathVariable Long id,
+                             @RequestParam(required = false) String statusFilter) {
+        return reportManager.buildReport(id, statusFilter);
+    }
+
+    @GetMapping("/{id}/metrics")
+    public PlanMetricsDto metrics(@PathVariable Long id) {
+        return metricsManager.computeMetrics(id);
     }
 
     private PlanTreeView toView(Plan plan) {

@@ -79,6 +79,26 @@ public class ActionManager implements ActionStateCallbacks {
     }
 
     @Transactional
+    public ProposedAction submitForApproval(Long id) {
+        return apply(id, (state, ctx) -> state.submitForApproval(ctx));
+    }
+
+    @Transactional
+    public ProposedAction approve(Long id) {
+        return apply(id, (state, ctx) -> state.approve(ctx));
+    }
+
+    @Transactional
+    public ProposedAction reject(Long id) {
+        return apply(id, (state, ctx) -> state.reject(ctx));
+    }
+
+    @Transactional
+    public ProposedAction reopen(Long id) {
+        return apply(id, (state, ctx) -> state.reopen(ctx));
+    }
+
+    @Transactional
     public ResourceAllocation addAllocation(Long actionId, ResourceAllocation alloc) {
         ProposedAction action = find(actionId);
         alloc.setAction(action);
@@ -118,6 +138,11 @@ public class ActionManager implements ActionStateCallbacks {
     @Override
     public void onComplete(ImplementedAction implemented) {
         ledgerManager.postCompletion(implemented);
+    }
+
+    @Override
+    public void onReopen(ImplementedAction implemented) {
+        if (implemented != null) ledgerManager.postReversal(implemented);
     }
 
     @Override

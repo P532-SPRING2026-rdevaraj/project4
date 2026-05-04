@@ -13,4 +13,20 @@ public interface ActionState {
     void complete(ActionContext ctx);
     void abandon(ActionContext ctx);
     String name();
+
+    default void submitForApproval(ActionContext ctx) {
+        throw new edu.iu.p532.rpl.exception.IllegalStateTransitionException(name(), "submitForApproval");
+    }
+
+    default void approve(ActionContext ctx) {
+        throw new edu.iu.p532.rpl.exception.IllegalStateTransitionException(name(), "approve");
+    }
+
+    default void reject(ActionContext ctx) {
+        throw new edu.iu.p532.rpl.exception.IllegalStateTransitionException(name(), "reject");
+    }
+
+    default void reopen(ActionContext ctx) {
+        throw new edu.iu.p532.rpl.exception.IllegalStateTransitionException(name(), "reopen");
+    }
 }

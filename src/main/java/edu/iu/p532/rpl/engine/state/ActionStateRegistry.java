@@ -28,6 +28,23 @@ public class ActionStateRegistry {
         states.put(ActionStatus.ABANDONED, abandoned);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    public ActionStateRegistry(ProposedState proposed,
+                               SuspendedState suspended,
+                               InProgressState inProgress,
+                               CompletedState completed,
+                               AbandonedState abandoned,
+                               PendingApprovalState pendingApproval,
+                               ReopenedState reopened) {
+        states.put(ActionStatus.PROPOSED, proposed);
+        states.put(ActionStatus.SUSPENDED, suspended);
+        states.put(ActionStatus.IN_PROGRESS, inProgress);
+        states.put(ActionStatus.COMPLETED, completed);
+        states.put(ActionStatus.ABANDONED, abandoned);
+        states.put(ActionStatus.PENDING_APPROVAL, pendingApproval);
+        states.put(ActionStatus.REOPENED, reopened);
+    }
+
     public ActionState stateFor(ActionStatus status) {
         ActionState s = states.get(status);
         if (s == null) {

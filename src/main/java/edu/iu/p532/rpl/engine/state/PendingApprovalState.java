@@ -5,7 +5,7 @@ import edu.iu.p532.rpl.exception.IllegalStateTransitionException;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CompletedState implements ActionState {
+public class PendingApprovalState implements ActionState {
 
     @Override public void implement(ActionContext ctx) {
         throw new IllegalStateTransitionException(name(), "implement");
@@ -27,13 +27,14 @@ public class CompletedState implements ActionState {
         throw new IllegalStateTransitionException(name(), "abandon");
     }
 
-    @Override public void reopen(ActionContext ctx) {
-        ctx.getCallbacks().onReopen(ctx.getAction().getImplementedAction());
-        ctx.getAction().setStatus(ActionStatus.REOPENED);
-        if (ctx.getAction().getImplementedAction() != null) {
-            ctx.getAction().getImplementedAction().setStatus(ActionStatus.REOPENED);
-        }
+    @Override public void approve(ActionContext ctx) {
+        ctx.getCallbacks().onImplement(ctx.getAction());
+        ctx.getAction().setStatus(ActionStatus.IN_PROGRESS);
     }
 
-    @Override public String name() { return ActionStatus.COMPLETED.name(); }
+    @Override public void reject(ActionContext ctx) {
+        ctx.getAction().setStatus(ActionStatus.PROPOSED);
+    }
+
+    @Override public String name() { return ActionStatus.PENDING_APPROVAL.name(); }
 }
