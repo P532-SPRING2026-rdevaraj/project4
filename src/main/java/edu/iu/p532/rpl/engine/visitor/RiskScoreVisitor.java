@@ -10,15 +10,15 @@ public class RiskScoreVisitor implements PlanNodeVisitor {
     private int score = 0;
 
     @Override
-    public void visit(ProposedAction action) {
-        if (action.getStatus() == ActionStatus.SUSPENDED
-                || action.getStatus() == ActionStatus.ABANDONED) {
+    public void visitLeaf(ProposedAction leaf) {
+        if (leaf.getStatus() == ActionStatus.SUSPENDED
+                || leaf.getStatus() == ActionStatus.ABANDONED) {
             score++;
         }
     }
 
     @Override
-    public void visit(Plan plan) {
+    public void visitComposite(Plan plan) {
         // composite — children visited recursively
     }
 

@@ -12,8 +12,8 @@ public class ResourceCostVisitor implements PlanNodeVisitor {
     private BigDecimal totalCost = BigDecimal.ZERO;
 
     @Override
-    public void visit(ProposedAction action) {
-        for (ResourceAllocation a : action.getAllocations()) {
+    public void visitLeaf(ProposedAction leaf) {
+        for (ResourceAllocation a : leaf.getAllocations()) {
             if (a.getQuantity() == null) continue;
             BigDecimal unitCost = (a.getResourceType() != null && a.getResourceType().getUnitCost() != null)
                     ? a.getResourceType().getUnitCost()
@@ -23,7 +23,7 @@ public class ResourceCostVisitor implements PlanNodeVisitor {
     }
 
     @Override
-    public void visit(Plan plan) {
+    public void visitComposite(Plan plan) {
         // composite — children visited recursively
     }
 

@@ -85,6 +85,6 @@ public class ProposedAction implements PlanNode {
 
     @Override
     public void accept(PlanNodeVisitor visitor) {
-        visitor.visit(this);
+        visitor.visitLeaf(this);
     }
 }

@@ -11,13 +11,13 @@ public class CompletionRatioVisitor implements PlanNodeVisitor {
     private int completedLeaves = 0;
 
     @Override
-    public void visit(ProposedAction action) {
+    public void visitLeaf(ProposedAction leaf) {
         totalLeaves++;
-        if (action.getStatus() == ActionStatus.COMPLETED) completedLeaves++;
+        if (leaf.getStatus() == ActionStatus.COMPLETED) completedLeaves++;
     }
 
     @Override
-    public void visit(Plan plan) {
+    public void visitComposite(Plan plan) {
         // composite node — children are visited recursively via accept
     }
 

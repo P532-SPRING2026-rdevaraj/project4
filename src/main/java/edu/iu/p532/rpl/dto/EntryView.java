@@ -6,6 +6,7 @@ import java.time.Instant;
 public record EntryView(
         Long id,
         Long accountId,
+        String accountName,
         BigDecimal amount,
         Instant chargedAt,
         Instant bookedAt,

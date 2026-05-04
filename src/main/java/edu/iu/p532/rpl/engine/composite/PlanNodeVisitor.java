@@ -9,6 +9,6 @@ import edu.iu.p532.rpl.domain.ProposedAction;
  * interface; existing node classes will not need to change.
  */
 public interface PlanNodeVisitor {
-    void visit(ProposedAction action);
-    void visit(Plan plan);
+    void visitLeaf(ProposedAction leaf);
+    void visitComposite(Plan plan);
 }

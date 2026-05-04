@@ -42,6 +42,7 @@ public class AccountController {
             out.add(new EntryView(
                     e.getId(),
                     e.getAccount().getId(),
+                    e.getAccount().getName(),
                     e.getAmount(),
                     e.getChargedAt(),
                     e.getBookedAt(),
